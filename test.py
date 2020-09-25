@@ -8,37 +8,60 @@ Created on Sat Jul 20 10:46:59 2019
 from autolab import DriverManager
 dm = DriverManager()
 
-print('\n-- Print summary, first time is empty --')
-dm.summary()
+dm.dummy['0'].config_help()
 
-print('\n-- Refresh drivers in case we have modified some of them --')
-dm.refresh()
 
-print('\n-- Print summary, first time is empty --')
-dm.summary()
+# print('\n-- Print summary, first time is empty --')
+# dm.help()
 
-print('\n-- Update repo (automatically refreshed) --')
-dm.update()
+# print('\n-- Refresh drivers in case we have modified some of them --')
+# dm.load_drivers()
 
-print('\n-- Print summary --')
-dm.summary()
+# print('\n-- Print summary, first time is empty --')
+# dm.help()
 
-print('\n-- access yenista_TUNICS --')
-print(dm['yenista_TUNICS'])
-print(dm.yenista_TUNICS)
-print(dm.get_driver('yenista_TUNICS'))
+# print('\n-- Update repo (automatically refreshed) --')
+# dm.update()
 
-print('\n-- yenista_TUNICS summary --')
-driver = dm.get_driver('yenista_TUNICS')
-driver.summary()
+# print('\n-- Print summary --')
+# dm.help()
 
-print('\n-- connect to yenista_TUNICS with last version --')
-conn_infos = {}
-instance = driver.connect()
+# print('\n-- access yenista_TUNICS --')
+# print(dm['yenista_TUNICS'])
+# print(dm.yenista_TUNICS)
+# print(dm.get_driver('yenista_TUNICS'))
 
-print('\n-- connect to yenista_TUNICS with a particular driver version --')
-conn_infos = {}
-instance = driver.connect(version='1.2.2')
+# instance = dm.yenista_TUNICS.connect(conn_infos) --> max
+
+# ## Usage
+# dm.yenista_TUNICS['1.1.1']
+# dm.yenista_TUNICS.get_release('1.1.1')
+# dm.yenista_TUNICS.get_release('1.1.1').version/comment/help()/connect(conn_infos)/config_help()
+# dm.yenista_TUNICS.get_release('1.1.1').date
+# dm.yenista_TUNICS.get_release('1.1.1').help()
+# instance = dm.yenista_TUNICS.connect(conn_infos,version='1.1.1')
+# instance = dm.yenista_TUNICS.get_release('1.1.1').connect(conn_infos)
+
+# # Instantiate a driver
+# instance = get_driver('yenista_TUNICS',version='1.1.1',connection='VISA',address='192.168.1.1')
+# instance = get_driver('yenista_TUNICS',**conn_infos)
+# instance = dm.yenista_TUNICS.get_release('1.1.1').connect(**conn_infos)
+# instance = dm.yenista_TUNICS['1.1.1'].connect(**conn_infos)
+# instance = dm.get_driver_infos('yenista_TUNICS').get_release('1.1.1').connect(**conn_infos)
+# instance = dm['yenista_TUNICS']['1.1.1'].connect(**conn_infos)
+
+
+# print('\n-- yenista_TUNICS summary --')
+# driver = dm.get_driver('yenista_TUNICS')
+# driver.help()
+
+# print('\n-- connect to yenista_TUNICS with last version --')
+# conn_infos = {}
+# instance = driver.connect()
+
+# print('\n-- connect to yenista_TUNICS with a particular driver version --')
+# conn_infos = {}
+# instance = driver.connect(version='1.2.2')
 
 #autolab.get_device('PCBRUNO')
 #from autolab import scan as s
@@ -77,11 +100,11 @@ instance = driver.connect(version='1.2.2')
 # scanner.start()
 # time.sleep(5)
 
-# # Pause scan 
+# # Pause scan
 # scanner.pause()
 # time.sleep(5)
 
-# # Resume scan 
+# # Resume scan
 # scanner.resume()
 # time.sleep(5)
 
