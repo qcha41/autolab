@@ -11,16 +11,31 @@ drivers = {}
 
 class DriverManager() :
     
+    ''' User class interface to deal with drivers '''
+    
     def __init__(self):
         self.refresh()
         
+        
     def list_drivers(self):
+        
+        ''' Returns the list of all the drivers names '''
+        
         return list(drivers.keys())
     
+    
     def list_categories(self):
+        
+        ''' Returns the list of unique drivers categories '''
+        
         return list(set([d.category for d in drivers.keys()]))
     
+    
     def refresh(self):
+        
+        ''' Resets of the 'drivers' global variable.
+        Loads the full structure of drivers folders. '''
+        
         global drivers
         drivers = {}
         for source_path in [paths.DRIVERS_OFFICIAL,paths.DRIVERS_LOCAL]:
@@ -31,7 +46,11 @@ class DriverManager() :
                     assert driver.name not in drivers.keys(), f'At least two drivers found with the same name {driver.name}.'
                     drivers[driver.name] = driver
                     
+                    
     def summary(self):
+        
+        ''' Displays in a pretty way the different available drivers and their information '''
+        
         tab_content = [['Category','Manufacturer','Model','Driver name','Last version'],None]
         for category in sorted(self.list_categories()) :
             for driver_name in sorted([d.name for d in drivers.keys() if d.category==category]) :
@@ -50,25 +69,47 @@ class DriverManager() :
         else :
             utilities.print_tab(tab_content)
         
+        
     def update(self):
+        
+        ''' Clone/Sync the official drivers repo locally and refresh drivers'''
+        
         from . import repo
         repo.sync()   
         self.refresh()
         
+        
     def get_driver(self,driver_name):
+        
+        ''' Returns the Driver object associated to the given driver_name '''
+        
         assert driver_name in drivers.keys(), f'Driver {driver_name} does not exist' 
         return drivers[driver_name]
 
+
     def __getattr__(self,attr):
+        
+        ''' Returns the Driver object associated to the given driver_name, using attribute access '''
+        
         return self.get_driver(attr)
     
+    
     def __getitem__(self,attr):
+        
+        ''' Returns the Driver object associated to the given driver_name, using dictionnary access '''
+        
         return self.get_driver(attr)
                     
 
+
+
 class Driver():
     
+    ''' This class represents a given driver, and its associated releases '''
+    
     def __init__(self,path) :
+        
+        ''' At init, loads all the release informations about this Driver '''
         
         assert os.path.isdir(path)
         self.path = path
@@ -93,21 +134,42 @@ class Driver():
                 assert release.name not in self.releases.keys()
                 self.releases[release.version] = release
                 
+                
     def list_versions(self):
+        
+        ''' Returns the list of all versions numbers available for this driver '''
+        
         return list(self.releases.keys())
     
+    
     def last_version(self):
+        
+        ''' Returns the last version number available for this driver '''
+        
         return max(self.list_versions())
     
+    
     def last_release(self):
+        
+        ''' Returns the instance of class Release associated with the last version available for this driver '''
+        
         return self.get_release(self.last_version())
                     
+    
     def connect(self,connection_infos,version=None) :
+        
+        ''' Returns an instance of the Driver_CONN class instantiated using connection_infos.
+        Use the last release if no version number provided '''
+        
         if version is None: version = max(self.versions())
         release = self.get_release(version)
         return release.connect(connection_infos)
         
+    
     def summary(self):
+        
+        ''' Displays in a pretty way the available releases of this driver '''
+        
         print(f" Driver {self.name}")
         print(f" Instrument {self.manufacturer}, model {self.model}")
         print('')
@@ -117,17 +179,30 @@ class Driver():
         tab_content.append(None)
         utilities.print_tab(tab_content)
         
+        
     def get_release(self,version):
+        
+        ''' Returns the Release class instance associated with the given version '''
+        
         assert version in self.releases.keys(), f"Version {version} of driver {self.name} does not exist"
         return self.releases[version]
     
+    
     def __getitem__(self,attr):
+        
+        ''' Returns the Release class instance associated with the given version, through dictionnary access '''
+        
         return self.get_release(attr)
+    
     
     
 class Release():
     
+    ''' This class represents a given release of a driver '''
+    
     def __init__(self,driver,path):
+        
+        ''' At init, loads release info '''
         
         self.driver = driver
     
@@ -150,15 +225,21 @@ class Release():
         self.autolab_config_path = os.path.join(self.path,'autolab_config.ini')
         assert os.path.exists(self.driver_path)  
         assert os.path.exists(self.autolab_config_path)
-        
     
         
     def connect(self,connection_infos):
+        
+        ''' Returns an instance of the Driver_CONN class instantiated using connection_infos. '''
+        
         connection_name = connection_infos.pop('connection')
         connection_class = DriverLibraryLoader(self.driver_path).get_connection_class(connection_name)
         return connection_class(connection_infos)
         
+    
     def summary(self):
+        
+        ''' Displays in a pretty way informations about this release '''
+        
         print(f'Driver {self.driver.name}')
         print(f'Release {self.version} (self.date)')
         print(f'Releases notes: {self.notes}')
@@ -247,6 +328,8 @@ class Release():
         
         
 class DriverLibraryLoader() :
+    
+    ''' This class allow to load a driver library and inspect it / instantiate the driver '''
     
     def __init__(self,path):
         
