@@ -35,7 +35,7 @@ class DriverManager() :
 
         from . import repository
         repository.sync()
-        self.load_drivers()
+        self.load_drivers_infos()
 
 
     def load_drivers_infos(self):
@@ -117,7 +117,7 @@ class DriverManager() :
 
         ''' Returns list of entry for the autocompletion '''
 
-        return ['update_repository','load_drivers_infos','help','get_driver_infos'] + self.list_drivers()
+        return ['update_drivers','help','get_driver_infos'] + self.list_drivers()
 
 
 
@@ -166,9 +166,11 @@ class DriverInfos():
                 try : release = Release(self,os.path.join(self.path,item))
                 except : release = None
                 if release is not None :
-                    assert release.name not in release.releases.keys()
-                    self.releases[release.version] = release
+
+                    #cherche plutot dans le __dir__?
+                    #assert release.name not in release.releases.keys()
                     
+                    self.releases[release.version] = release
        
 
 
