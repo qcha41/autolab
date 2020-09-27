@@ -38,8 +38,11 @@ def emphasize(txt,sign='-'):
                     txt
                     ---
     '''
-
-    return sign*len(txt) + '\n' + txt + '\n' + sign*len(txt)
+    if isinstance(txt,str) :
+        return sign*len(txt) + '\n' + txt + '\n' + sign*len(txt)
+    else :
+        maxlen = max([len(a) for a in txt])
+        return sign*maxlen + '\n' + '\n'.join(txt) + '\n' + sign*maxlen
 
 
 def underline(txt,sign='-'):
