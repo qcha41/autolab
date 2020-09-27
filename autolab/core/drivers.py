@@ -131,7 +131,6 @@ class DriverInfos():
         ''' At init, loads all the release informations about this Driver '''
 
         # Init
-        self.path = ''
         self.name = ''
         self.category = ''
         self.manufacturer = ''
@@ -141,7 +140,7 @@ class DriverInfos():
 
         # Path and name
         assert os.path.isdir(path)
-        self.path = path
+        self._path = path
         self.name = os.path.basename(path)
 
         # Load driver infos
@@ -156,14 +155,14 @@ class DriverInfos():
                         setattr(self,key,driver_infos[key])
 
         # No versionning (only one version at root)
-        if all(x in os.listdir(self.path) for x in ['driver.py', 'autolab_config.ini']) :
-            release = Release(self,self.path)
+        if all(x in os.listdir(self._path) for x in ['driver.py', 'autolab_config.ini']) :
+            release = Release(self,self._path)
             self.releases[release.version] = release
 
         # Load releases
         else :
-            for item in os.listdir(self.path) :
-                try : release = Release(self,os.path.join(self.path,item))
+            for item in os.listdir(self._path) :
+                try : release = Release(self,os.path.join(self._path,item))
                 except : release = None
                 if release is not None :
                     assert release.version not in self.releases.keys()
@@ -239,24 +238,21 @@ class Release():
         ''' At init, loads release info '''
 
         # Init
-        self.path = ''
-        self.version = ''
+        self.version = '0'
+        self.date = '<no_date>'
         self.comments = ''
-        self.date = ''
-
-        self.driver_infos = driver_infos
-
-        # Check required files
-        self.path = path
-        self.driver_path = os.path.join(self.path,'driver.py')
-        self.autolab_config_path = os.path.join(self.path,'autolab_config.ini')
-        assert os.path.isdir(path)
-        assert os.path.exists(self.driver_path)
-        assert os.path.exists(self.autolab_config_path)
         
+        self._driver_infos = driver_infos
+
+        # Check required paths
+        self._paths = {'main':path}
+        self._paths['driver'] = os.path.join(path,'driver.py')
+        self._paths['autolab_config'] = os.path.join(path,'autolab_config.ini')
+        for path in self._paths.values() : assert os.path.exists(path)
+
         # Version
-        if self.path == self.driver_infos.path : self.version = '0'
-        else : self.version = os.path.basename(self.path)
+        if self._paths['main'] != self._driver_infos._path : 
+            self.version = os.path.basename(path)
 
         # Load release infos
         release_infos_path = os.path.join(path,'release_infos.ini')
@@ -274,7 +270,7 @@ class Release():
         ''' Returns an instance of the Driver_CONN class instantiated using connection_infos. '''
 
         connection_name = connection_infos.pop('connection')
-        connection_class = DriverLibraryLoader(self.driver_path).get_connection_class(connection_name)
+        connection_class = DriverLibraryLoader(self._paths['driver']).get_connection_class(connection_name)
         return connection_class(connection_infos)
 
 
@@ -282,11 +278,11 @@ class Release():
 
         ''' Displays in a pretty way informations about this release '''
 
-        library = DriverLibraryLoader(self.driver_path)
+        library = DriverLibraryLoader(self._paths['driver'])
 
         # Load list of all parameters
         params = {}
-        params['driver'] = self.driver_infos.name
+        params['driver'] = self._driver_infos.name
         params['connection'] = {}
         for connnection_name in library.get_connection_names() :
             params['connection'][connnection_name] = library.get_class_args('Driver_'+connnection_name)
@@ -298,7 +294,7 @@ class Release():
         mess = '\n'
 
         # Name and category if available
-        submess = [f'Driver "{self.driver_infos.name}" ({self.driver_infos.category})',
+        submess = [f'Driver "{self._driver_infos.name}" ({self._driver_infos.category})',
                    f'Release version: {self.version} ({self.date})']
         if self.comments != '' : submess.append(f'Release notes: {self.comments}')
         mess += utilities.emphasize(submess,sign='=') + '\n'
@@ -369,8 +365,6 @@ class DriverLibraryLoader() :
     ''' This class allow to load a driver library and inspect it / instantiate the driver '''
 
     def __init__(self,path):
-
-        self.path = path
 
         # Save current working directory path and go to driver's directory
         curr_dir = os.getcwd()
