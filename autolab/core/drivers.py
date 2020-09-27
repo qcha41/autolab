@@ -278,18 +278,9 @@ class Release():
         return connection_class(connection_infos)
 
 
-    def help(self):
+    def help(self, _print=True, _parser=False):
 
         ''' Displays in a pretty way informations about this release '''
-
-        print(f'Driver {self.driver_infos.name}')
-        print(f'Release version: {self.version} ({self.date})')
-        if self.comments != '' : print(f'Releases notes: {self.comments}')
-
-
-    def config_help(self, _print=True, _parser=False):
-
-        ''' Display the help of a particular driver (connection types, modules, ...) '''
 
         library = DriverLibraryLoader(self.driver_path)
 
@@ -307,7 +298,9 @@ class Release():
         mess = '\n'
 
         # Name and category if available
-        submess = f'Driver "{self.driver_infos.name}" ({self.driver_infos.category})'
+        submess = [f'Driver "{self.driver_infos.name}" ({self.driver_infos.category})',
+                   f'Release version: {self.version} ({self.date})']
+        if self.comments != '' : submess.append(f'Release notes: {self.comments}')
         mess += utilities.emphasize(submess,sign='=') + '\n'
 
         # Connections types

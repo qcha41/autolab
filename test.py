@@ -8,7 +8,7 @@ Created on Sat Jul 20 10:46:59 2019
 from autolab import DriverManager
 dm = DriverManager()
 
-dm.dummy['0'].config_help()
+dm.dummy['0'].help()
 
 
 # print('\n-- Print summary, first time is empty --')
