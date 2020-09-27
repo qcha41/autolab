@@ -117,7 +117,7 @@ class DriverManager() :
 
         ''' Returns list of entry for the autocompletion '''
 
-        return ['update_drivers','help','get_driver_infos'] + self.list_drivers()
+        return ['update_drivers','load_drivers_infos','help','get_driver_infos'] + self.list_drivers()
 
 
 
@@ -166,10 +166,7 @@ class DriverInfos():
                 try : release = Release(self,os.path.join(self.path,item))
                 except : release = None
                 if release is not None :
-
-                    #cherche plutot dans le __dir__?
-                    #assert release.name not in release.releases.keys()
-                    
+                    assert release.version not in self.releases.keys()
                     self.releases[release.version] = release
        
 
@@ -229,7 +226,7 @@ class DriverInfos():
 
         ''' Returns list of entry for the autocompletion '''
 
-        return ['list_versions','last_version','last_release','get_release','get_last_release','connect','help']
+        return ['list_versions','last_version','get_release','get_last_release','help']
 
 
 
