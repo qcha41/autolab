@@ -226,7 +226,7 @@ class DriverInfos():
 
         ''' Returns list of entry for the autocompletion '''
 
-        return ['list_versions','last_version','get_release','get_last_release','help']
+        return ['list_versions','last_version','last_release','get_release','get_last_release','help']
 
 
 
