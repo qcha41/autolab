@@ -10,6 +10,7 @@ dm = DriverManager()
 dm.update_drivers()
 dm.help()
 dm.tektronix_TDS5104B['1.0.0'].help()
+dm.tektronix_TDS5104B['1.0.0'].connect()
 
 
 # print('\n-- Print summary, first time is empty --')

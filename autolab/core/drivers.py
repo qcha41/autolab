@@ -269,6 +269,7 @@ class Release():
 
         ''' Returns an instance of the Driver_CONN class instantiated using connection_infos. '''
 
+        assert 'connection' in connection_infos.keys(), 'Missing connection parameter in connection informations'
         connection_name = connection_infos.pop('connection')
         connection_class = DriverLibraryLoader(self._paths['driver']).get_connection_class(connection_name)
         return connection_class(connection_infos)
