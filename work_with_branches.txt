@@ -1,0 +1,34 @@
+# Get all branches references from remote
+git fetch --all
+
+# Update the branches list also for those removed
+git fetch --all --prune
+
+# You need to remove local branches that do not exist remotely (anymore) yourselves:
+# delete a local branch
+git branch -d dev-v2-printtab
+
+# delete a remote branch
+git push origin -d dev-v2-printtab
+
+
+# Want to work on a branch (i] check it out, ii] pull existing commits)
+git checkout dev-v2-printtab
+git pull    (optionnal => saffer)
+
+# Merge a branch to the active one
+git merge dev-v2-printtab
+
+# List all branches
+git branch -a
+
+
+# Pull from remote (only for the active branch)
+git pull
+
+# Add a commit (only for the active branch)
+git commit -m 'Some message'
+
+# Push to remote (only for the active branch)
+git push
+
