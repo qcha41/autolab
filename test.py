@@ -7,8 +7,9 @@ Created on Sat Jul 20 10:46:59 2019
 
 from autolab import DriverManager
 dm = DriverManager()
-
-dm.dummy['0'].help()
+dm.update_drivers()
+dm.help()
+dm.tektronix_TDS5104B['1.0.0'].help()
 
 
 # print('\n-- Print summary, first time is empty --')

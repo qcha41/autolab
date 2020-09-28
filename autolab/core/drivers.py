@@ -246,16 +246,16 @@ class Release():
 
         # Check required paths
         self._paths = {'main':path}
-        self._paths['driver'] = os.path.join(path,'driver.py')
-        self._paths['autolab_config'] = os.path.join(path,'autolab_config.ini')
-        for path in self._paths.values() : assert os.path.exists(path)
+        self._paths['driver'] = os.path.join(self._paths['main'],'driver.py')
+        self._paths['autolab_config'] = os.path.join(self._paths['main'],'autolab_config.ini')
+        for p in self._paths.values() : assert os.path.exists(p)
 
         # Version
         if self._paths['main'] != self._driver_infos._path : 
-            self.version = os.path.basename(path)
+            self.version = os.path.basename(self._paths['main'])
 
         # Load release infos
-        release_infos_path = os.path.join(path,'release_infos.ini')
+        release_infos_path = os.path.join(self._paths['main'],'release_infos.ini')
         if os.path.exists(release_infos_path) :
             release_infos = configparser.ConfigParser()
             release_infos.read(release_infos_path)
