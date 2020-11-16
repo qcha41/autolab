@@ -1,20 +1,153 @@
 # -*- coding: utf-8 -*-
 
-def DEMO_local_devices() :
-
-    ''' This is just a function that emulates the loading of the local devices config '''
-
-    local_devices = {}    
-    local_devices['my_tunics'] = {'driver':'yenista_TUNICS','connection':'VISA','address':'ASRL6::INSTR'}
-    local_devices['my_power_meter'] = {'driver':'exfo_PM1613','connection':'VISA','address':'GPIB0::2::INSTR'}
-    local_devices['my_remote_PC'] = {'driver':'autolab_SERVER','connection':'VISA','address':'192.192.192.192'}
-    return local_devices
+# def DEMO_local_devices() :
+#
+#     ''' This is just a function that emulates the loading of the local devices config '''
+#
+#     local_devices = {}
+#     local_devices['my_tunics'] = {'driver':'yenista_TUNICS','connection':'VISA','address':'ASRL6::INSTR'}
+#     local_devices['my_power_meter'] = {'driver':'exfo_PM1613','connection':'VISA','address':'GPIB0::2::INSTR'}
+#     local_devices['my_remote_PC'] = {'driver':'autolab_SERVER','connection':'VISA','address':'192.192.192.192'}
+#     return local_devices
 
 
 #from .core.devices import StructureManager, ElementWrapper
 
+from . import config
+
+devices = {}
+
+def list_devices() :
+
+    """ Returns the list of available Devices """
+
+    return list(devices.keys())
+
+def get_device(device_name) :
+
+    """ Returns the Device object with given name """
+    assert device_name in list_devices(), "Device '{device_name}' doesn't exist."
+    return devices[device_name]
+
+def refresh_configurations() :
+
+    """ Refresh devices configurations :
+    - New configuration --> configure a new Device object
+    - Updated configuration --> update configuration of the associated Device
+    - Removed configuration --> destroy and remove associated Device object """
+
+    # Load devices config
+    config_file = config.load_config('DEVICES')
+
+    # For each device config
+    for device_name in config_file.sections() :
+
+        # Instantiate a new Device object if not already present
+        if device_name not in list_devices() :
+            devices[device_name] = Device(device_name)
+
+        # (Re-)Configure the Device object
+        devices[device_name]._configure(config_file[device_name])
+
+    # Remove obsolete Device object
+    for device_name in [name for name in devices.keys() if name not in config_file.sections()] :
+        devices[device_name]._destroy()
+        del devices[device_name]
+
+
+class Device():
+
+    def __init__(self,name):
+        self._name = name
+        self._config = None
+        self._driver_instance = None
+        self._alive = True
+        self._elements = {}
+
+    def _configure(self,config):
+
+        """ Update the Device's configuration. Disconnect Device if connected """
+
+        if self.is_connected() :
+            self.disconnect()
+        self._config = config
+
+    def connect(self,force_reconnect=False):
+
+        """ Instantiate the associated Driver class with current configuration
+        and load Device structure information """
+
+        if self.is_connected() :
+            if force_reconnect = True : self.disconnect()
+            else : print("Device '{self.name}' already connected. Use option force_reconnect=True to reset the connection.")
+
+        if ~self.is_connected() :
+
+            self._driver_instance = 1
+
+    def disconnect(self):
+
+        """ Try to close properly the connection to the instrument """
+
+        try : self._driver_instance.close()
+        except : pass
+        self._driver_instance = None
+        self._elements = {}
+
+    def is_connected(self):
+
+        """ Returns the connection state of the Device """
+
+        return self._driver_instance is None
+
+    def _destroy(self):
+
+        """ Disconnect Device and make it unusable in the future """
+
+        if self.is_connected() : self.disconnect()
+        self._alive = False
+
+    def get(self,element_address):
+
+        """ Returns element using its address """
+
+        return ElementWrapper(self,element_address)
+
+    def __getattr__(self, attr):
+
+        """ Returns element using classes attributes """
+
+        return self.get(attr)
+
+    def __getitem__(self, key):
+
+        """ Returns element using dictionary key access """
+
+        return self.get(key)
+
+
+
+# Device class should have a status and a configurator function (that acts only if not connected)
+
+elements = {}
+# element[<device>::<module>::<variable>] = {'type':'variable', ...}
+
+def list_loaded_devices() :
+    return
+
+
+
+
+
+
+
+
+
+
+
 
 class DeviceManager():
+
     ''' This is the main class of the Devices part.
     It represents the top level device of the device structure,
     and as this, it inherits from the ElementWrapper class.
@@ -210,23 +343,9 @@ class ElementWrapper() :
         self._address = address
         self._sm.get_element(self._address)
 
-
     def summary(self):
         # Print the summary of that Element
         self._sm.print_summary(self._address)
-
-    def connect(self,**kwargs):
-        # Connect this Element (if it is a Device)
-        self._sm.connect_element(self._address,**kwargs)
-
-    def is_connected(self):
-        # Returns the connection status of this Element (if it is a Device)
-        self._sm.is_element_connected(self._address)
-
-    def disconnect(self):
-        # Disconnect this Element (if it is a Device)
-        self._sm.disconnect(self._address)
-
 
     # Routines to access sub elements
     def get(self,attr):
