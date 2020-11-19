@@ -15,213 +15,139 @@
 
 from . import config
 
-devices = {}
+elements = {}
 
-def list_devices():
-    """ Returns the list of available Devices """
-    return tuple(devices.keys())
+def list_elements(parent_address='',level=None, type=None):
 
+    temp_list = list(elements.keys())
+    if parent_address != '' :
+        assert parent_address in temp_list, f"Parent element '{parent_address}' doesn't exist."
+        temp_list =  [a for a in elements.keys() if a.startswith(parent_address+'.')]
+    if level is not None :
+        temp_list = [a for a in temp_list if len(a.split('.')) == len(parent_address.split('.')) + level]
+    if type is not None :
+        assert type in [Device,Module,Variable,Action], f"Type '{type}' is not valid."
+        temp_list = [a for a in temp_list if isinstance(a,type)]
 
-def get_device(device_name):
-    """ Returns the Device object with given name """
-    assert device_name in list_devices(), "Device '{device_name}' doesn't exist."
-    return devices[device_name]
+    return temp_list
 
+def add_element(address,element):
+    assert address not in list_elements(), f"Element '{address}' already exists."
+    elements[address] = element
+
+def get_element(address) :
+    assert address in list_elements(), f"Element '{address}' doesn't exist."
+    return elements[address]
+
+def remove_element(parent_address):
+    for address in list_elements(parent_address=parent_address) :
+        del elements[address]
 
 def refresh_devices():
-    """ Refresh devices configurations :
-    - New configuration --> configure a new Device object
-    - Updated configuration --> update configuration of the associated Device
-    - Removed configuration --> destroy and remove associated Device object """
 
     # Load devices config
     config_file = config.load_config('DEVICES')
 
-    # For each device config
-    for device_name in config_file.sections():
+    # Updated devices config
+    for device_name in [a for a in config_file.sections() if a in list_elements(level=0)]:
+        if get_element(device_name).config != dict(config_file[device_name]):
+            remove_device(device_name)
+            create_device(device_name,config_file)
 
-        # Instantiate a new Device object if not already present
-        if device_name not in list_devices():
-            devices[device_name] = Device(device_name)
+    # New devices config
+    for device_name in [a for a in config_file.sections() if a not in list_elements(level=0)]:
+        create_device(device_name,dict(config_file[device_name]))
 
-        # (Re-)Configure the Device object
-        devices[device_name]._configure(config_file[device_name])
+    # Deleted devices config
+    for device_name in [a for a in list_elements(level=0) if a not in config_file.sections()]:
+        remove_device(device_name)
 
-    # Remove obsolete Device object
-    for device_name in [name for name in devices.keys() if name not in config_file.sections()]:
-        devices[device_name]._destroy()
-        del devices[device_name]
+def remove_device(device_name) :
+    get_element(device_name).disconnect()
+    remove_element(device_name)
 
+def create_device(device_name,config_file):
+    device = Device(dict(config_file[device_name]))
+    add_element(device_name, device)
 
-class Device():
+class Device :
 
-    def __init__(self, name):
-        self._name = name
-        self._config = None
-        self._driver_instance = None
-        self._obsolete = False
-        self._elements = {}
-
-    def _configure(self, configparser_section):
-
-        """ Update the Device's configuration. Disconnect Device if connected """
-
-        if self.is_connected():
-            self.disconnect()
-        self._config = dict(configparser_section)
+    def __init__(self,config):
+        self.config = config
+        self.driver_instance = None
 
     def connect(self, force_reconnect=False):
 
         """ Instantiate the associated Driver class with current configuration
         and load Device structure information """
 
-        # Disconnection if required
-        if self.is_connected():
+        # Disconnect if required
+        if self.driver_instance not None:
             if force_reconnect is True:
                 self.disconnect()
             else:
                 print(
-                    "Device '{self.name}' already connected. Use option force_reconnect=True to reset the connection.")
+                    "Device '{self.address}' already connected. Use option force_reconnect=True to reset the connection.")
 
         # Connection
-        if self.is_connected() is False:
-            self._driver_instance = 1
+        if self.is_connected() is False :
+            self.driver_instance = 1
 
         # Loading of the elements
         pass
 
+    def is_connected(self):
+        return self.driver_instance is not None
+
     def disconnect(self):
-
         """ Try to close properly the connection to the instrument """
-
-        # Disconnect driver instance
         try:
-            self._driver_instance.close()
+            self.driver_instance.close()
         except:
             pass
-
-        # Clear variables
-        self._driver_instance = None
-        self._elements = {}
-
-    def is_connected(self):
-
-        """ Returns the connection state of the Device """
-
-        return self._driver_instance is None
-
-    def _destroy(self):
-
-        """ Disconnect Device and make it unusable in the future """
-
-        if self.is_connected(): self.disconnect()
-        self._obsolete = True
-
-    def _get_element_property(self):
-
-    def get(self, element_address):
-
-        """ Returns element using its address """
-
-        assert self._obsolete is False, "This Device object is obsolete, use get_device() to get a fresh one."
-        assert element_address in self._elements.keys(), f"Element '{element_address}' doesn't exist in Device '{self._name}'."
-        return Element(self, element_address)
-
-    def __getattr__(self, attr):
-
-        """ Returns element using classes attributes """
-
-        return self.get(attr)
-
-    def __getitem__(self, key):
-
-        """ Returns element using dictionary key access """
-
-        return self.get(key)
+        self.driver_instance = None
 
 
+class Module :
+
+    def __init__(self,config):
+        self.config = config
 
 
-class Element():
-    ''' This class is basically just a dynamical user interface for
-    navigating and interacting with elements of a Device object. '''
+class Variable :
 
-    def __init__(self, device, address):
-        # The element wrapper receive the current StructureManager instance
-        # from its parent element, plus the address of the represented Element
-        self._device = device
-        self._address = address
-        self._config = self._device._elements[self._address]
+    def __init__(self,config):
+        self.config = config
 
-    # Routines for navigating between elements
-    # ============================================================================
+    def read(self):
 
-    def get(self, sub_address):
+        assert self.config['read_function'] is not None, \
+            f"The Variable '{self._address}' of Device '{self._device._name}' is not writable"
+        assert self.writable, f"The variable {self.name} is not writable"
+        value = self.type(value)
+        self.write_function(value)
+        if self._write_signal is not None: self._write_signal.emit()
 
-        """ Returns sub-element using its relative address """
+    def write(self, value):
 
-        full_address = '.'.join([self._address,sub_address])
-        return self._device.get(full_address)
-
-    def __getattr__(self, attr):
-
-        """ Returns sub-element using classes attributes """
-
-        return self.get(attr)
-
-    def __getitem__(self, key):
-
-        """ Returns sub-element using dictionary key access """
-
-        return self.get(key)
-
-    # Routines for autocompletion
-    # ============================================================================
-
-    def __dir__(self):
-        pass
-
-
-class Module(Element) :
-    """ User interface for Modules """
-    def __init__(self,device,address):
-        Element.__init__(self,device,address)
-
-class Variable(Element) :
-    """ User interface for Variables """
-    def __init__(self, device, address):
-        Element.__init__(self, device, address)
+        assert self._config['read_function'] is not None, \
+            f"The Variable '{self._address}' of Device '{self._device._name}' is not readable"
+        answer = self._config['read_function']()
+        if self._config['read_signal'] is not None:
+            self._config['read_signal'].emit(answer)
+        return answer
 
     def __call__(self, value=None):
 
         """ Measure or set the value of the variable """
-
-        assert
-
-        # GET FUNCTION
-        if value is None:
-            assert self._config['read_function'] is not None, \
-                f"The Variable '{self._address}' of Device '{self._device._name}' is not readable"
-            answer = self._config['read_function']()
-            if self._config['read_signal'] is not None:
-                self._config['read_signal'].emit(answer)
-            return answer
-
-        # SET FUNCTION
-        else:
-            assert self._config['read_function'] is not None, \
-                f"The Variable '{self._address}' of Device '{self._device._name}' is not writable"
-            assert self.writable, f"The variable {self.name} is not writable"
-            value = self.type(value)
-            self.write_function(value)
-            if self._write_signal is not None: self._write_signal.emit()
+        if value None: return self.read()
+        else: self.write(value)
 
 
-class Action(Element) :
-    """ User interface for Actions """
-    def __init__(self, device, address):
-        Element.__init__(self, device, address)
+class Action :
 
+    def __init__(self,config):
+        self.config = config
 
 # Device class should have a status and a configurator function (that acts only if not connected)
 
