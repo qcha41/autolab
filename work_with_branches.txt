@@ -23,6 +23,21 @@ git merge dev-v2-printtab
 git branch -a
 
 
+# Procedure to merge a branch "to_merge" to "master"
+git checkout to_merge                   # checkout to to_merge to modify it
+git pull                                # work on the last version
+=> modifs
+git add *                               # push modified version
+git commit -m 'message'
+git push
+git checkout master                     # checkout to branch
+git pull
+git merge v2                            # merge modified branch to master
+git add * git commit -m "merged branch"
+git push                                # finally push merged branch
+
+
+
 # Pull from remote (only for the active branch)
 git pull
 
