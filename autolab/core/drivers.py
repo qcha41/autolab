@@ -155,7 +155,7 @@ class DriverInfos():
                         setattr(self,key,driver_infos[key])
 
         # No versionning (only one version at root)
-        if all(x in os.listdir(self._path) for x in ['driver.py', 'autolab_config.ini']) :
+        if all(x in os.listdir(self._path) for x in ['driver.py', 'autolab.ini']) :
             release = Release(self,self._path)
             self.releases[release.version] = release
 
@@ -195,13 +195,14 @@ class DriverInfos():
 
         ''' Displays in a pretty way the available releases of this driver '''
 
-        print(f" Driver {self.name}")
-        if self.manufacturer != '' : print(f" Manufacturer: {self.manufacturer}")
+        print(f" Driver:              {self.name}")
+        if self.manufacturer != '' : print(f" Category:            {self.category}")
+        if self.manufacturer != '' : print(f" Manufacturer:        {self.manufacturer}")
         if self.model != '' : print(f" Instrument model(s): {self.model}")
         print('')
         tab_content = [['Releases versions (date)','Releases notes'],None]
         for version in sorted(self.releases.keys()) :
-            tab_content.append([f'{version} ({self.releases[version].date})',self.releases[version].comments])
+            tab_content.append([f'{version} ({self.releases[version].date})',self.releases[version].notes])
         tab_content.append(None)
         utilities.print_tab(tab_content)
 
@@ -240,14 +241,14 @@ class Release():
         # Init
         self.version = '0'
         self.date = '<no_date>'
-        self.comments = ''
+        self.notes = ''
         
         self._driver_infos = driver_infos
 
         # Check required paths
         self._paths = {'main':path}
         self._paths['driver'] = os.path.join(self._paths['main'],'driver.py')
-        self._paths['autolab_config'] = os.path.join(self._paths['main'],'autolab_config.ini')
+        self._paths['autolab'] = os.path.join(self._paths['main'],'autolab.ini')
         for p in self._paths.values() : assert os.path.exists(p)
 
         # Version
@@ -255,13 +256,13 @@ class Release():
             self.version = os.path.basename(self._paths['main'])
 
         # Load release infos
-        release_infos_path = os.path.join(self._paths['main'],'release_infos.ini')
+        release_infos_path = os.path.join(self._paths['main'],'release_notes.ini')
         if os.path.exists(release_infos_path) :
             release_infos = configparser.ConfigParser()
             release_infos.read(release_infos_path)
             if 'general' in release_infos.sections() :
                 release_infos = release_infos['general']
-                for key in ['comments','date'] :
+                for key in ['notes','date'] :
                     if key in release_infos.keys() : setattr(self,key,release_infos[key])
 
 
@@ -297,7 +298,7 @@ class Release():
         # Name and category if available
         submess = [f'Driver "{self._driver_infos.name}" ({self._driver_infos.category})',
                    f'Release version: {self.version} ({self.date})']
-        if self.comments != '' : submess.append(f'Release notes: {self.comments}')
+        if self.notes != '' : submess.append(f'Release notes: {self.notes}')
         mess += utilities.emphasize(submess,sign='=') + '\n'
 
         # Connections types
