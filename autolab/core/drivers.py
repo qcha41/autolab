@@ -79,9 +79,11 @@ class DriverManager() :
                         for driver_name in drivers_infos.keys()]
             content = sorted(content, key=lambda x: (x[0], x[1]))
             tab_content = [['Category','Driver name','Last version'],None]
+            firstcolumn_previous_content = None            
             for i in range(len(content)) :
-                if tab_content[-1] is None or tab_content[-1][0] != content[i][0] : 
+                if tab_content[-1] is None or content[i][0] != firstcolumn_previous_content : 
                     tab_content.append(content[i])
+                    firstcolumn_previous_content = content[i][0]
                 else : 
                     tab_content.append([''] + content[i][1:])
             utilities.print_tab(tab_content+[None])
