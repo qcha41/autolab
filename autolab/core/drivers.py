@@ -68,16 +68,28 @@ class DriverManager() :
         return list(set([drivers_infos[d].category for d in drivers_infos.keys()]))
 
 
-    def help(self):
+    def help(self,alpha_sort=False):
 
-        ''' Displays in a pretty way the different available drivers and their information '''
+        ''' Displays in a pretty way the different available drivers and their information 
+        
+        Parameters
+        ----------
+        alpha_sort : bool
+                     Default is False. Sort driver alphabetically
+        
+        Examples
+        --------
+        autolab.help()
+        
+        '''
 
         if len(self.list_drivers()) > 0 :
             
             content = [[drivers_infos[driver_name].category,driver_name,
                         drivers_infos[driver_name].last_version()] 
                         for driver_name in drivers_infos.keys()]
-            content = sorted(content, key=lambda x: (x[0], x[1]))
+            if alpha_sort: content = sorted(content, key=lambda x: (x[1]))
+            else: content = sorted(content, key=lambda x: (x[0]))
             tab_content = [['Category','Driver name','Last version'],None]
             firstcolumn_previous_content = None            
             for i in range(len(content)) :
