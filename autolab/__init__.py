@@ -37,6 +37,9 @@ del telemetry
 # Webbrowser shortcuts
 from .core.web import community, docs
 
+# Config loader
+from .core.config_loader import load_config_dict
+
 # Driver and Device managers
 from .core.drivers import DriverManager
 #from .core.devices import DeviceManager

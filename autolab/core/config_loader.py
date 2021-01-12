@@ -36,11 +36,11 @@ def write_dict_to_csv(input_dict,filename):
         
     assert isinstance(input_dict,dict)
     
-    # Create another dict to add a first column with device names (key is '')
+    # Create another dict to add a first column with section/device names (key is '')
     dict_to_save = {}
     for i,k in input_dict.items():
         dict_to_save[i] = {}
-        dict_to_save[i].update({'device':i})
+        dict_to_save[i].update({'':i})
         dict_to_save[i].update(input_dict[i])
     
     # List all the nested keys (e.g. address, connection) => necessary to csv DictWriter
@@ -69,7 +69,7 @@ def read_dict_from_csv(file_path):
         output_dict = {}
         for row in reader:
             for key,value in row.items():
-                if key == 'device': # means device name
+                if key == '': # means section/device name
                     device = value.strip(' ') # space present at begining
                     output_dict[device] = {}
                 else:
@@ -82,7 +82,7 @@ def load_config_dict(config_path):
     
     ''' Load config ini file by default and returns 2D dict with keys for the different section names and values as dicts of all the sections found '''
     
-    if os.path.exists(config_path):   # if .ini
+    if config_path.endswith('.ini') and os.path.exists(config_path):   # if .ini
         # Load config parser
         config_ini = configparser.ConfigParser()
         config_ini.read(config_path)
@@ -92,9 +92,7 @@ def load_config_dict(config_path):
         
         return config_dict
         
-    elif os.path.exists(config_path.strip('.ini')+'.csv'):  # if not .ini and .csv
-        config_path = config_path.strip('.ini')+'.csv'
-    
+    elif config_path.endswith('.csv') and os.path.exists(config_path):  # if .csv
         # Load csv file to dict
         config_dict = read_dict_from_csv(config_path)
         
